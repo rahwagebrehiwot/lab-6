@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Vue pet depot</title>
+    <script src="https://unpkg.com/vue"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="assets/css/app.css"/>
+
+</head>
+<body>
+
+<div id="app">
+    <header>
+
+        <div class="navbar navbar-default">
+            <div class="navbar-header">
+                <h1>{{ sitename }}</h1>
+            </div>
+
+            <p class="nav navbar-nav navbar-right cart">
+                <button class="btn btn-default" v-on:click="showCheckout">
+                    <span class="glyphicon glyphicon-shopping-cart"></span>{{ cartItemCount }} Checkout
+                </button>
+            </p>
+
+        </div>
+
+    </header>
+
+    <main>
+        <div class="row product">
+            <div v-if="showProduct">
+                <div class="col-md-2 col-md-offset-2">
+                    <figure>
+                        <img v-bind:src="product.image">
+                    </figure>
+                </div>
+
+                <div class="col-md-6 col-md-offset-2">
+                    <h1 v-text="product.title"></h1>
+                    <p v-html="product.description"></p>
+                    <p class="price">{{ product.price | formatPrice }}</p>
+                    <button v-if="canAddToCart" v-on:click="addToCart" class="btn btn-default">Add to cart</button>
+                    <button v-else disabled>Add to cart</button>
+                </div>
+            </div>
+
+            <div v-else>
+
+                <div class="col-md-10 col-md-offset-1">
+                    <div class="panel panel-info">
+                        <div class="panel-heading">Pet Depot Checkout</div>
+
+                        <div class="panel-body">
+                            <div class="col-md-6">
+                                <strong>First name: </strong>
+                                <input v-model.trim="order.firstName" class="form-control">
+                            </div>
+
+                            <div class="col-md-6">
+                                <strong>Last name: </strong>
+                                <input v-model.trim="order.lastName" class="form-control">
+                            </div>
+
+                            <div class="form-group">
+                                <div class="col-md-12">
+                                    <strong>Address: </strong>
+                                </div>
+                                <div class="col-md-12">
+                                    <input v-model.trim="order.address" class="form-control">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <div class="col-md-12">
+                                    <strong>City: </strong>
+                                </div>
+                                <div class="col-md-12">
+                                    <input v-model.trim="order.city" class="form-control">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <div class="col-md-2">
+                                    <strong>State: </strong>
+                                    <!-- <select v-model="order.state" class="form-control">
+                                        <option disabled value="">State</option>
+                                        <option v-bind:value="states.AL">AL</option>
+                                        <option v-bind:value="states.AR">AR</option>
+                                        <option v-bind:value="states.MN">MN</option>
+                                        <option v-bind:value="states.CA">CA</option>
+                                    </select> -->
+
+                                    <select v-model="order.state" class="form-control">
+                                        <option disabled value="">State</option>
+                                        <!-- (state, abbr) is in the reverse order to the more common (key, abbr) -->
+                                        <!-- (state) iterates over the value in an object -->
+                                        <!-- (state, abbr, index) iterates over value, attribute, index. -->
+                                        <option v-for="(state, abbr) in states" v-bind:value="state"> {{ abbr }}</option>
+                                    </select>
+
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <div class="col-md-6 col-md-offset-4">
+                                    <strong>Zip: </strong>
+                                    <input v-model.number="order.zip" class="form-control">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <div class="col-md-6 boxes">
+                                    <input type="checkbox" id="gift" value="true"
+                                           v-bind:true-value="order.sendGift"
+                                           v-bind:false-value="order.dontSendGift"
+                                           v-model="order.gift">
+
+                                    <label for="gift">Ship as a gift?</label>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <div class="col-md-6 boxes">
+                                    <input type="radio" id="home" value="Home" v-bind:value="order.home" v-model="order.method">
+                                    <label for="home">Home</label>
+                                    <input type="radio" id="business" value="Business" v-bind:value="order.business" v-model="order.method">
+                                    <label for="business">Business</label>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <div class="col-md-6">
+                                    <button type="submit" class="btn btn-primary" @click="submitForm">Place Order</button>
+                                </div>
+                            </div>
+
+                            <div class="col-md-12">
+                                <pre>
+                                    First name: {{ order.firstName}}
+                                    Last name: {{ order.lastName}}
+                                    Address: {{order.address}}
+                                    City: {{order.city}}
+                                    Zip: {{ typeof(order.zip) }}
+                                    State: {{order.state}}
+                                    Method: {{ order.method}}
+                                    Gift: {{ order.gift}}
+                                </pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+</div>
+
+<script>
+    var APP_LOG_LIFECYCLE_EVENTS = true
+    var webstore = new Vue({
+        el: '#app',
+        data: {
+            sitename: 'Vue.js Pet Depot',
+            product: {
+                id: 1001,
+                title: 'Cat food 25lb bag',
+                description: 'A 25lb bag of <em>irresistable, organic</em> goodness for your cat.',
+                price: "20.00",
+                image: 'cat.png',
+                availableInventory: 5,
+            },
+            cart: [],
+            showProduct: true,
+            order: {
+                firstName: '',
+                lastName: '',
+                address: '',
+                city: '',
+                zip: '',
+                state: '',
+                method: 'Home Address',
+                home: 'Home',
+                business: 'Business',
+                gift: 'Send As A Gift',
+                sendGift: 'Send As A Gift',
+                dontSendGift: 'Do Not Send As A Gift'
+            },
+            states: {
+                MN: 'Minnesota',
+                AR: 'Arkansas',
+                CA: 'California',
+                AL: 'Alabama'
+            }
+        },
+        methods: {
+            addToCart: function() {
+                this.cart.push(this.product.id)
+            },
+            showCheckout: function() {
+                this.showProduct = this.showProduct ? false : true // toggle
+            },
+            submitForm() {
+                alert(' "Submitted" ')
+            }
+        },
+        filters: {
+            formatPrice: function(price) {
+                return '$' + price
+            }
+        }, computed: {
+            cartItemCount: function() {
+                return this.cart.length || ''
+            },
+            canAddToCart: function() {
+                return this.product.availableInventory > this.cartItemCount
+            }
+        },
+        beforeCreate: function() {
+            if (APP_LOG_LIFECYCLE_EVENTS) console.log('before create')
+        },
+        created: function() {
+            if (APP_LOG_LIFECYCLE_EVENTS) console.log('created')
+        },
+        beforeMount: function() {
+            if (APP_LOG_LIFECYCLE_EVENTS) console.log('before mount')
+        },
+        mounted: function() {
+            if (APP_LOG_LIFECYCLE_EVENTS) console.log('mounted')
+
+        },
+        beforeUpdate: function() {
+            if (APP_LOG_LIFECYCLE_EVENTS) console.log('before update')
+        },
+        updated: function() {
+            if (APP_LOG_LIFECYCLE_EVENTS) console.log('updated')
+        },
+        beforeDestroy() {
+            if (APP_LOG_LIFECYCLE_EVENTS) console.log('before destroy')
+        },
+        destroyed() {
+            if (APP_LOG_LIFECYCLE_EVENTS) console.log('destroyed')
+        }
+    })
+</script>
+
+</body>
+
+</html>
